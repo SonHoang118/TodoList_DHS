@@ -30,8 +30,8 @@ type TaskForm = {
   done: boolean;
 };
 
-const HOUR_START = 5;
-const SLOT_COUNT = 13;
+const HOUR_START = 0;
+const SLOT_COUNT = 24;
 const ROW_HEIGHT = 56;
 const DAY_NAMES = ["CN", "TH 2", "TH 3", "TH 4", "TH 5", "TH 6", "TH 7"];
 const MINI_DAY_NAMES = ["Cn", "T2", "T3", "T4", "T5", "T6", "T7"];
@@ -92,10 +92,8 @@ function parseInputDateTime(value: string) {
 }
 
 function formatHourLabel(hour: number) {
-  if (hour === 0) return "12 AM";
-  if (hour < 12) return `${hour} AM`;
-  if (hour === 12) return "12 PM";
-  return `${hour - 12} PM`;
+  // 24h format
+  return `${hour.toString().padStart(2, "0")}:00`;
 }
 
 function resetFormValues(baseDate: Date): TaskForm {
@@ -404,6 +402,7 @@ export default function Home() {
           startAt: startAt.toISOString(),
           deadline: deadline.toISOString(),
           done: taskForm.done,
+          userId: currentUser?.id,
         }),
       });
       if (res.ok) {
@@ -424,7 +423,11 @@ export default function Home() {
   };
 
   const onDeleteTask = async (taskId: number) => {
-    await fetch(`/api/tasks/${taskId}`, { method: "DELETE" });
+    await fetch(`/api/tasks/${taskId}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: currentUser?.id }),
+    });
     setTasks((prev) => prev.filter((task) => task.id !== taskId));
     if (editingTaskId === taskId) {
       closeForm();
@@ -447,6 +450,7 @@ export default function Home() {
         startAt: task.startAt.toISOString(),
         deadline: task.deadline.toISOString(),
         done: newDone,
+        userId: currentUser?.id,
       }),
     });
   };
@@ -487,6 +491,7 @@ export default function Home() {
           startAt: updatedTask.startAt.toISOString(),
           deadline: updatedTask.deadline.toISOString(),
           done: updatedTask.done,
+          userId: currentUser?.id,
         }),
       });
     }
@@ -536,6 +541,7 @@ export default function Home() {
             startAt: task.startAt.toISOString(),
             deadline: task.deadline.toISOString(),
             done: task.done,
+            userId: currentUser?.id,
           }),
         });
       }
@@ -564,6 +570,7 @@ export default function Home() {
         moveWeek={moveWeek}
         headerTitle={headerTitle}
         onCurrentUserChange={setCurrentUser}
+        onCreateClick={openCreateForm}
       />
 
       <div className="mx-auto flex max-w-400">
@@ -614,25 +621,38 @@ export default function Home() {
         </aside>
 
         <main className="min-w-0 flex-1 overflow-x-auto pb-8">
+          <Modal open={showTaskForm} onClose={closeForm}>
+            <TaskForm
+              editingTask={editingTask}
+              taskForm={taskForm}
+              formError={formError}
+              onChangeFormField={(field, value) => onChangeFormField(field as keyof TaskForm, value)}
+              onSaveTask={onSaveTask}
+              closeForm={closeForm}
+              onDeleteTask={onDeleteTask}
+            />
+          </Modal>
           <div className="min-w-215 px-3 pt-4 md:px-0">
             <div className="grid grid-cols-[44px_repeat(7,minmax(0,1fr))] border-b border-[#e0e0e0]">
               <div />
-              {weekDays.map((day) => (
-                <button
-                  key={dateKey(day.date)}
-                  type="button"
-                  onClick={() => setSelectedDate(day.date)}
-                  className="pb-2 text-center text-xs font-semibold tracking-wide text-[#5f6368]"
-                >
-                  <div>{day.label}</div>
-                  <div
-                    className={`mx-auto mt-1 flex h-9 w-9 items-center justify-center rounded-full text-2xl font-normal ${sameDay(day.date, selectedDate) ? "bg-[#1a73e8] text-white" : "text-[#202124]"
-                      }`}
+              {weekDays.map((day) => {
+                const isToday = sameDay(day.date, new Date());
+                return (
+                  <button
+                    key={dateKey(day.date)}
+                    type="button"
+                    onClick={() => setSelectedDate(day.date)}
+                    className={`pb-2 text-center text-xs font-semibold tracking-wide ${isToday ? "text-red-600" : "text-[#5f6368]"}`}
                   >
-                    {day.date.getDate()}
-                  </div>
-                </button>
-              ))}
+                    <div>{day.label}</div>
+                    <div
+                      className={`mx-auto mt-1 flex h-9 w-9 items-center justify-center rounded-full text-2xl font-normal ${sameDay(day.date, selectedDate) ? "bg-[#1a73e8] text-white" : isToday ? "text-red-600" : "text-[#202124]"}`}
+                    >
+                      {day.date.getDate()}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Multi-day bar rows with stacking */}

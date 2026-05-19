@@ -52,40 +52,51 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     return () => window.removeEventListener('mouseup', handleMouseUp);
   }, []);
 
-  return (
-  <div className="relative">
-    <div className="grid grid-cols-[44px_repeat(7,minmax(0,1fr))]">
-      {hourLabels.map((hour, hourIndex) => (
-        <div key={hour} className="contents">
-          <div className="h-14 border-b border-[#e8eaed] pr-2 pt-1 text-right text-[11px] text-[#70757a]">{hour}</div>
-          {weekDays.map((day) => {
-            const cellKey = `${dateKey(day.date)}-${hourIndex}`;
-            const isDropTarget = draggingTaskId !== null && dropCellKey === cellKey;
-            return (
-              <div
-                key={`${dateKey(day.date)}-${hour}`}
-                onDragOver={(event) => {
-                  event.preventDefault();
-                  if (draggingTaskId !== null) {
-                    setDropCellKey(cellKey);
-                  }
-                }}
-                onDragLeave={() => {
-                  if (dropCellKey === cellKey) {
-                    setDropCellKey(null);
-                  }
-                }}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  onDropTaskToCell(day.date, hourIndex);
-                }}
-                className={`h-14 border-b border-l border-[#e8eaed] transition-colors ${isDropTarget ? "bg-[#e8f0fe]" : "bg-transparent"}`}
-              />
-            );
-          })}
+    // Đặt chiều cao cố định cho grid, cho phép cuộn dọc
+    // Xác định hôm nay
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return (
+      <div className="relative h-[1344px] overflow-y-auto"> {/* 24 giờ x 56px = 1344px */}
+        <div className="grid grid-cols-[44px_repeat(7,minmax(0,1fr))]">
+          {hourLabels.map((hour, hourIndex) => (
+            <div key={hour} className="contents">
+              <div className="h-14 border-b border-[#e8eaed] pr-2 pt-1 text-right text-[11px] text-[#70757a]">{hour}</div>
+              {weekDays.map((day, dayIdx) => {
+                const cellKey = `${dateKey(day.date)}-${hourIndex}`;
+                const isDropTarget = draggingTaskId !== null && dropCellKey === cellKey;
+                const isToday = day.date.getFullYear() === today.getFullYear() && day.date.getMonth() === today.getMonth() && day.date.getDate() === today.getDate();
+                return (
+                  <div
+                    key={`${dateKey(day.date)}-${hour}`}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      if (draggingTaskId !== null) {
+                        setDropCellKey(cellKey);
+                      }
+                    }}
+                    onDragLeave={() => {
+                      if (dropCellKey === cellKey) {
+                        setDropCellKey(null);
+                      }
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      onDropTaskToCell(day.date, hourIndex);
+                    }}
+                    className={`h-14 border-b border-l border-[#e8eaed] transition-colors ${isDropTarget ? "bg-[#e8f0fe]" : "bg-transparent"}`}
+                  >
+                    {/* Chỉ render chữ đỏ ở hàng đầu tiên của cột hôm nay */}
+                    {hourIndex === 0 && isToday && (
+                      <span className="absolute left-1/2 -translate-x-1/2 text-red-600 font-bold text-xs mt-[-18px]">Hôm nay</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
     <div className="absolute inset-0 grid grid-cols-[44px_repeat(7,minmax(0,1fr))] pointer-events-none">
       <div />
       {weekDays.map((day, dayIndex) => (
