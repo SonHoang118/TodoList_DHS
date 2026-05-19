@@ -32,8 +32,14 @@ const Header: React.FC<HeaderProps> = ({ goToToday, moveWeek, headerTitle, onCur
   React.useEffect(() => {
     if (!dropdownOpen) return;
     const handleClick = (e: MouseEvent) => {
-      const dropdown = document.getElementById("user-dropdown");
-      if (dropdown && !dropdown.contains(e.target as Node)) {
+      const dropdown = document.getElementById("user-dropdown") || document.getElementById("user-dropdown-mobile");
+      const toggleBtnDesktop = document.getElementById("user-dropdown-toggle-desktop");
+      const toggleBtnMobile = document.getElementById("user-dropdown-toggle-mobile");
+      if (
+        dropdown && !dropdown.contains(e.target as Node) &&
+        (!toggleBtnDesktop || !toggleBtnDesktop.contains(e.target as Node)) &&
+        (!toggleBtnMobile || !toggleBtnMobile.contains(e.target as Node))
+      ) {
         setDropdownOpen(false);
       }
     };
@@ -66,6 +72,7 @@ const Header: React.FC<HeaderProps> = ({ goToToday, moveWeek, headerTitle, onCur
       <div className="flex items-center gap-2 px-3 py-2 md:hidden border-b border-[#e0e0e0]">
         <div className="relative flex flex-1">
           <div
+            id="user-dropdown-toggle-mobile"
             className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm cursor-pointer flex-1"
             onClick={() => setDropdownOpen((prev) => !prev)}
           >
@@ -76,7 +83,7 @@ const Header: React.FC<HeaderProps> = ({ goToToday, moveWeek, headerTitle, onCur
             <svg className={`w-4 h-4 flex-shrink-0 transition-transform ${dropdownOpen ? "rotate-180" : "rotate-0"}`} fill="none" stroke="#6b7280" strokeWidth="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
           </div>
           {dropdownOpen && (
-            <div id="user-dropdown-mobile" className="absolute left-0 top-full z-20 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-xl">
+            <div id="user-dropdown-mobile" className="absolute left-0 top-full z-20 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-xl" style={{ pointerEvents: 'auto' }}>
               <ul className="max-h-56 overflow-y-auto py-2">
                 {users.map((user) => (
                   <li
@@ -124,6 +131,7 @@ const Header: React.FC<HeaderProps> = ({ goToToday, moveWeek, headerTitle, onCur
       <div className="mx-auto flex h-18 max-w-400 items-center gap-4 px-3 md:px-6">
         <div className="relative hidden md:flex">
           <div
+            id="user-dropdown-toggle-desktop"
             className="flex items-center gap-2 rounded-full bg-white px-2 py-1.5 md:px-3 md:py-2 shadow-sm cursor-pointer min-w-[36px] md:min-w-[140px]"
             onClick={() => setDropdownOpen((prev) => !prev)}
           >
