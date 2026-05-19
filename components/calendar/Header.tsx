@@ -89,6 +89,7 @@ const Header: React.FC<HeaderProps> = ({ goToToday, moveWeek, headerTitle, onCur
                   <li
                     key={user.id}
                     className={`flex items-center gap-2 px-4 py-2 cursor-pointer transition-colors rounded-md mx-2 mb-1 ${currentUser && user.id === currentUser.id ? "bg-blue-100 text-blue-700 font-semibold" : "hover:bg-gray-100"}`}
+                    style={{ pointerEvents: 'auto' }}
                     onClick={() => {
                       setCurrentUser(user);
                       onCurrentUserChange(user);
@@ -108,6 +109,7 @@ const Header: React.FC<HeaderProps> = ({ goToToday, moveWeek, headerTitle, onCur
               <div className="border-t border-gray-200 px-2 py-2">
                 <button
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-blue-600 hover:bg-blue-50 transition-colors font-medium"
+                  style={{ pointerEvents: 'auto' }}
                   onClick={() => { setDropdownOpen(false); addUser(); }}
                 >
                   <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="#3b82f6" strokeWidth="2"/><path d="M12 8v8M8 12h8" stroke="#3b82f6" strokeWidth="2"/></svg>
