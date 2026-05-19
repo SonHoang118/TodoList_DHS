@@ -4,7 +4,7 @@ export interface TaskFormProps {
   editingTask: any;
   taskForm: any;
   formError: string;
-  onChangeFormField: (field: string, value: string) => void;
+  onChangeFormField: (field: string, value: string | boolean) => void;
   onSaveTask: (event: React.FormEvent<HTMLFormElement>) => void;
   closeForm: () => void;
   onDeleteTask: (id: number) => void;
@@ -60,6 +60,15 @@ const TaskForm: React.FC<TaskFormProps> = ({
         className="w-full rounded border border-[#dadce0] px-2 py-1.5"
       />
     </div>
+    <label className="flex items-center gap-2 cursor-pointer select-none">
+      <input
+        type="checkbox"
+        checked={!!taskForm.done}
+        onChange={(e) => onChangeFormField("done", e.target.checked)}
+        className="h-4 w-4 rounded border-[#dadce0] accent-[#1a73e8]"
+      />
+      <span className="text-xs font-semibold text-[#5f6368]">Đã hoàn thành</span>
+    </label>
     {formError ? <p className="text-xs text-[#d93025]">{formError}</p> : null}
     <div className="grid grid-cols-2 gap-2">
       <button type="submit" className="rounded bg-[#1a73e8] px-3 py-2 text-xs font-semibold text-white">

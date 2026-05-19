@@ -1,4 +1,8 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
+
+const HOUR_START = 5;
+const ROW_HEIGHT = 56;
+
 
 export interface CalendarGridProps {
   hourLabels: string[];
@@ -32,6 +36,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   onResizeStart,
 }) => {
   const didResizeOrDragRef = useRef(false);
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Reset flag on any mouseup so it never gets stuck as true
   useEffect(() => {
@@ -127,8 +137,35 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         </div>
       ))}
     </div>
-    <div className="pointer-events-none absolute left-[calc(44px+2*calc((100%-44px)/7))] top-112 h-0.5 w-[calc((100%-44px)/7)] bg-[#d93025]" />
-    <div className="pointer-events-none absolute left-[calc(44px+2*calc((100%-44px)/7)-4px)] top-[calc(8*3.5rem-4px)] h-2 w-2 rounded-full bg-[#d93025]" />
+    {(() => {
+      const todayIndex = weekDays.findIndex((d) =>
+        d.date.getFullYear() === now.getFullYear() &&
+        d.date.getMonth() === now.getMonth() &&
+        d.date.getDate() === now.getDate()
+      );
+      if (todayIndex === -1) return null;
+      const topPx = (now.getHours() + now.getMinutes() / 60 - HOUR_START) * ROW_HEIGHT;
+      if (topPx < 0) return null;
+      return (
+        <>
+          <div
+            className="pointer-events-none absolute h-0.5 bg-[#d93025]"
+            style={{
+              top: topPx,
+              left: `calc(44px + ${todayIndex} * (100% - 44px) / 7)`,
+              width: `calc((100% - 44px) / 7)`,
+            }}
+          />
+          <div
+            className="pointer-events-none absolute h-2 w-2 rounded-full bg-[#d93025]"
+            style={{
+              top: topPx - 4,
+              left: `calc(44px + ${todayIndex} * (100% - 44px) / 7 - 4px)`,
+            }}
+          />
+        </>
+      );
+    })()}
   </div>
   );
 };

@@ -1,8 +1,7 @@
-
 "use client";
 import React from "react";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 
 import {
   TaskForm,
@@ -28,6 +27,7 @@ type TaskForm = {
   description: string;
   startAt: string;
   deadline: string;
+  done: boolean;
 };
 
 const HOUR_START = 5;
@@ -109,6 +109,7 @@ function resetFormValues(baseDate: Date): TaskForm {
     description: "",
     startAt: formatInputDateTime(start),
     deadline: formatInputDateTime(end),
+    done: false,
   };
 }
 
@@ -126,16 +127,34 @@ export default function Home() {
   const [resizeStartY, setResizeStartY] = useState<number | null>(null);
   const [resizeOriginDeadline, setResizeOriginDeadline] = useState<Date | null>(null);
 
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: 1,
-      title: "Chot backlog sprint",
-      description: "Thong nhat ticket uu tien cao",
-      startAt: new Date(2026, 4, 19, 9, 0),
-      deadline: new Date(2026, 4, 19, 10, 30),
-      done: false,
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [currentUser, setCurrentUser] = useState<{ id: number; fullName: string } | null>(null);
+
+  const loadTasks = useCallback(async () => {
+    if (!currentUser) {
+      setTasks([]);
+      return;
     }
-  ]);
+
+    try {
+      const res = await fetch(`/api/tasks?user=${currentUser.id}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setTasks(
+        data.map((t: { id: number; title: string; description: string; startAt: string; deadline: string; done: boolean }) => ({
+          ...t,
+          startAt: new Date(t.startAt),
+          deadline: new Date(t.deadline),
+        }))
+      );
+    } catch (e) {
+      console.error("Failed to load tasks", e);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    loadTasks();
+  }, [loadTasks]);
 
   const [taskForm, setTaskForm] = useState<TaskForm>(() => resetFormValues(initialDate));
 
@@ -313,6 +332,7 @@ export default function Home() {
       description: task.description,
       startAt: formatInputDateTime(task.startAt),
       deadline: formatInputDateTime(task.deadline),
+      done: task.done,
     });
     setShowTaskForm(true);
   };
@@ -323,11 +343,11 @@ export default function Home() {
     setFormError("");
   };
 
-  const onChangeFormField = (field: keyof TaskForm, value: string) => {
+  const onChangeFormField = (field: keyof TaskForm, value: string | boolean) => {
     setTaskForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const onSaveTask = (event: React.FormEvent<HTMLFormElement>) => {
+  const onSaveTask = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormError("");
 
@@ -352,29 +372,50 @@ export default function Home() {
     }
 
     if (editingTaskId === null) {
-      const nextTask: Task = {
-        id: Date.now(),
-        title,
-        description,
-        startAt,
-        deadline,
-        done: false,
-      };
-      setTasks((prev) => [...prev, nextTask]);
+      if (!currentUser) {
+        setFormError("Vui long chon nguoi dung truoc khi tao task.");
+        return;
+      }
+
+      const res = await fetch(`/api/tasks?user=${currentUser.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          startAt: startAt.toISOString(),
+          deadline: deadline.toISOString(),
+          done: taskForm.done,
+          userId: currentUser.id,
+        }),
+      });
+      if (res.ok) {
+        const newTask = await res.json();
+        setTasks((prev) => [...prev, { ...newTask, startAt: new Date(newTask.startAt), deadline: new Date(newTask.deadline) }]);
+      }
     } else {
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === editingTaskId
-            ? {
-              ...task,
-              title,
-              description,
-              startAt,
-              deadline,
-            }
-            : task
-        )
-      );
+      const editingTask = tasks.find((t) => t.id === editingTaskId);
+      const res = await fetch(`/api/tasks/${editingTaskId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          startAt: startAt.toISOString(),
+          deadline: deadline.toISOString(),
+          done: taskForm.done,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setTasks((prev) =>
+          prev.map((task) =>
+            task.id === editingTaskId
+              ? { ...updated, startAt: new Date(updated.startAt), deadline: new Date(updated.deadline) }
+              : task
+          )
+        );
+      }
     }
 
     setSelectedDate(startAt);
@@ -382,28 +423,44 @@ export default function Home() {
     closeForm();
   };
 
-  const onDeleteTask = (taskId: number) => {
+  const onDeleteTask = async (taskId: number) => {
+    await fetch(`/api/tasks/${taskId}`, { method: "DELETE" });
     setTasks((prev) => prev.filter((task) => task.id !== taskId));
     if (editingTaskId === taskId) {
       closeForm();
     }
   };
 
-  const toggleTaskDone = (taskId: number) => {
+  const toggleTaskDone = async (taskId: number) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    const newDone = !task.done;
     setTasks((prev) =>
-      prev.map((task) => (task.id === taskId ? { ...task, done: !task.done } : task))
+      prev.map((t) => (t.id === taskId ? { ...t, done: newDone } : t))
     );
+    await fetch(`/api/tasks/${taskId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: task.title,
+        description: task.description,
+        startAt: task.startAt.toISOString(),
+        deadline: task.deadline.toISOString(),
+        done: newDone,
+      }),
+    });
   };
 
   const onDragTaskStart = (taskId: number) => {
     setDraggingTaskId(taskId);
   };
 
-  const onDropTaskToCell = (dayDate: Date, hourIndex: number) => {
+  const onDropTaskToCell = async (dayDate: Date, hourIndex: number) => {
     if (draggingTaskId === null) {
       return;
     }
 
+    let updatedTask: Task | undefined;
     setTasks((prev) =>
       prev.map((task) => {
         if (task.id !== draggingTaskId) {
@@ -414,14 +471,25 @@ export default function Home() {
         const newStart = new Date(dayDate);
         newStart.setHours(HOUR_START + hourIndex, 0, 0, 0);
         const newEnd = new Date(newStart.getTime() + duration);
+        updatedTask = { ...task, startAt: newStart, deadline: newEnd };
 
-        return {
-          ...task,
-          startAt: newStart,
-          deadline: newEnd,
-        };
+        return updatedTask;
       })
     );
+
+    if (updatedTask) {
+      await fetch(`/api/tasks/${updatedTask.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: updatedTask.title,
+          description: updatedTask.description,
+          startAt: updatedTask.startAt.toISOString(),
+          deadline: updatedTask.deadline.toISOString(),
+          done: updatedTask.done,
+        }),
+      });
+    }
 
     setDraggingTaskId(null);
     setDropCellKey(null);
@@ -456,6 +524,22 @@ export default function Home() {
   };
 
   const onResizeEnd = () => {
+    if (resizingTaskId !== null) {
+      const task = tasks.find((t) => t.id === resizingTaskId);
+      if (task) {
+        fetch(`/api/tasks/${task.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: task.title,
+            description: task.description,
+            startAt: task.startAt.toISOString(),
+            deadline: task.deadline.toISOString(),
+            done: task.done,
+          }),
+        });
+      }
+    }
     setResizingTaskId(null);
     setResizeStartY(null);
     setResizeOriginDeadline(null);
@@ -475,7 +559,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#f1f3f4] text-[#1f1f1f]">
-      <Header goToToday={goToToday} moveWeek={moveWeek} headerTitle={headerTitle} />
+      <Header
+        goToToday={goToToday}
+        moveWeek={moveWeek}
+        headerTitle={headerTitle}
+        onCurrentUserChange={setCurrentUser}
+      />
 
       <div className="mx-auto flex max-w-400">
         <aside className="hidden w-65 border-r border-[#e0e0e0] px-4 py-5 md:block">
