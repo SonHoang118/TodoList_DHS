@@ -76,6 +76,22 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       }
     };
 
+    const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
+
+    const handleLongPressStart = (event: React.TouchEvent<HTMLDivElement>, taskId: number) => {
+      longPressTimeout.current = setTimeout(() => {
+        onDragTaskStart(taskId);
+        setDraggingTaskId(taskId);
+      }, 500); // 500ms long-press duration
+    };
+
+    const handleLongPressEnd = () => {
+      if (longPressTimeout.current) {
+        clearTimeout(longPressTimeout.current);
+        longPressTimeout.current = null;
+      }
+    };
+
     return (
       <div className="relative h-336 overflow-y-auto"> {/* 24 giờ x 56px = 1344px */}
         <div className="grid grid-cols-[44px_repeat(7,minmax(0,1fr))]">
@@ -140,6 +156,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                     setDropCellKey(null);
                     setTimeout(() => { didResizeOrDragRef.current = false; }, 100);
                   }}
+                  onTouchStart={(event) => handleLongPressStart(event, segment.taskId)}
+                  onTouchEnd={handleLongPressEnd}
+                  onTouchCancel={handleLongPressEnd}
                   onClick={(e) => {
                     if (didResizeOrDragRef.current) return;
                     const event = new CustomEvent('openEditTaskFromCalendar', { detail: segment.taskId });
