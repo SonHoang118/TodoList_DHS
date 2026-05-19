@@ -57,8 +57,27 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>, taskId: number) => {
+      onDragTaskStart(taskId);
+      setDraggingTaskId(taskId);
+    };
+
+    const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>, cellKey: string) => {
+      event.preventDefault();
+      setDropCellKey(cellKey);
+    };
+
+    const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>, day: Date, hourIndex: number) => {
+      event.preventDefault();
+      if (draggingTaskId !== null) {
+        onDropTaskToCell(day, hourIndex);
+        setDraggingTaskId(null);
+        setDropCellKey(null);
+      }
+    };
+
     return (
-      <div className="relative h-[1344px] overflow-y-auto"> {/* 24 giờ x 56px = 1344px */}
+      <div className="relative h-336 overflow-y-auto"> {/* 24 giờ x 56px = 1344px */}
         <div className="grid grid-cols-[44px_repeat(7,minmax(0,1fr))]">
           {hourLabels.map((hour, hourIndex) => (
             <div key={hour} className="contents">
@@ -85,11 +104,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       event.preventDefault();
                       onDropTaskToCell(day.date, hourIndex);
                     }}
+                    onTouchStart={(event) => handleTouchStart(event, draggingTaskId || 0)}
+                    onTouchMove={(event) => handleTouchMove(event, cellKey)}
+                    onTouchEnd={(event) => handleTouchEnd(event, day.date, hourIndex)}
                     className={`h-14 border-b border-l border-[#e8eaed] transition-colors ${isDropTarget ? "bg-[#e8f0fe]" : "bg-transparent"}`}
                   >
                     {/* Chỉ render chữ đỏ ở hàng đầu tiên của cột hôm nay */}
                     {hourIndex === 0 && isToday && (
-                      <span className="absolute left-1/2 -translate-x-1/2 text-red-600 font-bold text-xs mt-[-18px]">Hôm nay</span>
+                      <span className="absolute left-1/2 -translate-x-1/2 text-red-600 font-bold text-xs -mt-4.5">Hôm nay</span>
                     )}
                   </div>
                 );
