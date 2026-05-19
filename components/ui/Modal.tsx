@@ -33,7 +33,7 @@ export default function Modal({
           transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
           ${open ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-4"}
           mobile:rounded-xl mobile:max-w-full mobile:p-2`}
-                style={{ maxWidth: '95vw' }}
+                style={{ maxWidth: undefined }}
             >
                 <button
                     onClick={onClose}
