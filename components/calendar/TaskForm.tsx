@@ -19,8 +19,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
   closeForm,
   onDeleteTask,
 }) => (
-  <form onSubmit={onSaveTask} className="space-y-2 text-sm">
-    <h3 className="text-xs font-semibold uppercase tracking-wide text-[#5f6368]">
+  <form onSubmit={onSaveTask} className="space-y-3 text-base sm:text-sm">
+    <h3 className="text-sm sm:text-xs font-semibold uppercase tracking-wide text-[#5f6368]">
       {editingTask ? "Sua task" : "Tao task"}
     </h3>
     <div>
@@ -28,7 +28,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
       <input
         value={taskForm.title}
         onChange={(event) => onChangeFormField("title", event.target.value)}
-        className="w-full rounded border border-[#dadce0] px-2 py-1.5"
+        className="w-full rounded border border-[#dadce0] px-3 py-3 text-base sm:text-sm"
         placeholder="Nhap ten task"
       />
     </div>
@@ -37,7 +37,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
       <textarea
         value={taskForm.description}
         onChange={(event) => onChangeFormField("description", event.target.value)}
-        className="w-full rounded border border-[#dadce0] px-2 py-1.5"
+        className="w-full rounded border border-[#dadce0] px-3 py-3 text-base sm:text-sm"
         rows={2}
         placeholder="Nhap mo ta task"
       />
@@ -48,7 +48,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
         type="datetime-local"
         value={taskForm.startAt}
         onChange={(event) => onChangeFormField("startAt", event.target.value)}
-        className="w-full rounded border border-[#dadce0] px-2 py-1.5"
+        className="w-full rounded border border-[#dadce0] px-3 py-3 text-base sm:text-sm"
       />
     </div>
     <div>
@@ -57,27 +57,27 @@ const TaskForm: React.FC<TaskFormProps> = ({
         type="datetime-local"
         value={taskForm.deadline}
         onChange={(event) => onChangeFormField("deadline", event.target.value)}
-        className="w-full rounded border border-[#dadce0] px-2 py-1.5"
+        className="w-full rounded border border-[#dadce0] px-3 py-3 text-base sm:text-sm"
       />
     </div>
-    <label className="flex items-center gap-2 cursor-pointer select-none">
+    <label className="flex items-center gap-3 cursor-pointer select-none">
       <input
         type="checkbox"
         checked={!!taskForm.done}
         onChange={(e) => onChangeFormField("done", e.target.checked)}
-        className="h-4 w-4 rounded border-[#dadce0] accent-[#1a73e8]"
+        className="h-6 w-6 rounded border-[#dadce0] accent-[#1a73e8] sm:h-4 sm:w-4"
       />
-      <span className="text-xs font-semibold text-[#5f6368]">Đã hoàn thành</span>
+      <span className="text-sm sm:text-xs font-semibold text-[#5f6368]">Đã hoàn thành</span>
     </label>
     {formError ? <p className="text-xs text-[#d93025]">{formError}</p> : null}
-    <div className="grid grid-cols-2 gap-2">
-      <button type="submit" className="rounded bg-[#1a73e8] px-3 py-2 text-xs font-semibold text-white">
+    <div className="grid grid-cols-2 gap-3">
+      <button type="submit" className="rounded bg-[#1a73e8] px-4 py-3 text-base sm:text-xs font-semibold text-white">
         {editingTask ? "Cap nhat" : "Luu task"}
       </button>
       <button
         type="button"
         onClick={closeForm}
-        className="rounded border border-[#dadce0] bg-white px-3 py-2 text-xs font-semibold text-[#5f6368]"
+        className="rounded border border-[#dadce0] bg-white px-4 py-3 text-base sm:text-xs font-semibold text-[#5f6368]"
       >
         Huy
       </button>
@@ -85,7 +85,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
         <button
           type="button"
           onClick={() => { onDeleteTask(editingTask.id); }}
-          className="col-span-2 rounded border border-[#f3c6c4] bg-white px-3 py-2 text-xs font-semibold text-[#d93025] mt-1"
+          className="col-span-2 rounded border border-[#f3c6c4] bg-white px-4 py-3 text-base sm:text-xs font-semibold text-[#d93025] mt-1"
         >
           Xoa task
         </button>

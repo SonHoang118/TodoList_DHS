@@ -127,6 +127,7 @@ export default function Home() {
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [currentUser, setCurrentUser] = useState<{ id: number; fullName: string } | null>(null);
+  const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
 
   const loadTasks = useCallback(async () => {
     if (!currentUser) {
@@ -632,6 +633,81 @@ export default function Home() {
               onDeleteTask={onDeleteTask}
             />
           </Modal>
+          {/* Toggle view */}
+          <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+            <button
+              type="button"
+              onClick={() => setViewMode("calendar")}
+              className={`flex items-center gap-1 rounded-full px-4 py-1.5 text-sm font-medium border transition-colors ${
+                viewMode === "calendar"
+                  ? "bg-[#1a73e8] text-white border-[#1a73e8]"
+                  : "bg-white text-[#5f6368] border-[#dadce0] hover:bg-[#f5f7fa]"
+              }`}
+            >
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2"/></svg>
+              Lịch
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={`flex items-center gap-1 rounded-full px-4 py-1.5 text-sm font-medium border transition-colors ${
+                viewMode === "list"
+                  ? "bg-[#1a73e8] text-white border-[#1a73e8]"
+                  : "bg-white text-[#5f6368] border-[#dadce0] hover:bg-[#f5f7fa]"
+              }`}
+            >
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+              Danh sách
+            </button>
+          </div>
+
+          {viewMode === "list" ? (
+            <div className="px-3 pb-8">
+              {tasks.length === 0 ? (
+                <div className="rounded-lg border border-[#dadce0] bg-white px-4 py-6 text-center text-[#70757a]">
+                  Chưa có task nào.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {[...tasks]
+                    .sort((a, b) => a.startAt.getTime() - b.startAt.getTime())
+                    .map((task) => (
+                      <div
+                        key={task.id}
+                        className="rounded-lg border border-[#dadce0] bg-white px-4 py-3 cursor-pointer hover:bg-[#f5f7fa] flex items-start gap-3"
+                        onClick={() => openEditForm(task)}
+                      >
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); toggleTaskDone(task.id); }}
+                          className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                            task.done ? "border-[#1a73e8] bg-[#1a73e8] text-white" : "border-[#5f6368]"
+                          }`}
+                        >
+                          {task.done && (
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="white" strokeWidth="3" strokeLinecap="round"/></svg>
+                          )}
+                        </button>
+                        <div className="min-w-0 flex-1">
+                          <p className={`font-medium ${task.done ? "line-through text-[#70757a]" : "text-[#202124]"}`}>{task.title}</p>
+                          {task.description && (
+                            <p className="mt-0.5 text-sm text-[#70757a]">{task.description}</p>
+                          )}
+                          <p className="mt-1 text-xs text-[#9aa0a6]">
+                            {formatDateTimeText(task.startAt)} → {formatDateTimeText(task.deadline)}
+                          </p>
+                        </div>
+                        <span className={`ml-2 flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                          task.done ? "bg-[#eceff1] text-[#5f6368]" : "bg-[#d2e3fc] text-[#174ea6]"
+                        }`}>
+                          {task.done ? "Xong" : "Đang làm"}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          ) : (
           <div className="min-w-215 px-3 pt-4 md:px-0">
             <div className="grid grid-cols-[44px_repeat(7,minmax(0,1fr))] border-b border-[#e0e0e0]">
               <div />
@@ -678,6 +754,7 @@ export default function Home() {
               onResizeStart={onResizeStart}
             />
           </div>
+          )}
         </main>
       </div>
     </div>
